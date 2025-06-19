@@ -33,6 +33,7 @@ class Env:
         self.explored_rate = 0
         self.explored_area = 0
         self.step_count = 0
+        self.reward_step = 0
         
 
     def reset(self,)->np.ndarray:
@@ -43,10 +44,15 @@ class Env:
         obs: np.ndarray
             机器人自己的地图
         '''
-        # 更新机器人自己的地图
-        self.robot.explored_area = 0
+        self.explored_rate = 0
+        self.explored_area = 0
         self.step_count = 0
-        robot_belief_map = self.robot.reset(self.map.robot_start_position, self.map.global_map)
+        self.reward_step = 0
+        # 选择地图
+        global_map=self.map.reset()
+
+        # 更新机器人自己的地图
+        robot_belief_map = self.robot.reset(self.map.robot_start_position, global_map)
         # 更新探索率
         self.update_explored_area_rate()
         # 加上机器人自己的位置
@@ -108,13 +114,15 @@ class Env:
 
         # 1. 探索奖励 - 增大奖励信号
         if explored_area_change > 0:
-            reward += min(explored_rate_change *500 , 1)
-        else:
-            reward -= 0.1
+            # reward += explored_rate_change*200
+            self.reward_step = self.step_count
+        # 2. 惩罚长时间不探索新的区域
+        if self.step_count - self.reward_step > 10:
+            reward -= ((self.step_count - self.reward_step)//10)*0.05
         # 3. 完成奖励
         if terminated:
-            reward += 50
-        
+            reward += 100
+        # print(f"explored_rate_change: {explored_rate_change}, reward: {reward}")
         return reward,done
 
 
