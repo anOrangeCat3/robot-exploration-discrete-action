@@ -25,7 +25,7 @@ agent = PPO_Agent(
 
 # 加载最新的模型文件
 model_dir = 'models'
-model_path = os.path.join(model_dir, 'model_20250619_2137.pth')
+model_path = os.path.join(model_dir, 'model_20250620_0054.pth')
 print(model_path)
 agent.network.load_state_dict(torch.load(model_path))
 print(f"Loaded model from {model_path}")

@@ -15,11 +15,24 @@ class PPO_Network(nn.Module):
         
         # 特征提取网络
         self.conv_layers = nn.Sequential(
-            nn.Conv2d(num_inputs, 32, kernel_size=8, stride=4),  # (200-8)/4 + 1 = 49
+            # 第一层：使用较小kernel保留细节
+            nn.Conv2d(num_inputs, 32, kernel_size=5, stride=2, padding=2),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2),  # (49-4)/2 + 1 = 24
+            
+            # 第二层：继续提取特征
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1),  # (24-3)/1 + 1 = 22
+            
+            # 第三层：深层特征
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            
+            # 第四层：抽象特征
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
         )
 
@@ -28,15 +41,28 @@ class PPO_Network(nn.Module):
         # 全连接层
         self.fc = nn.Sequential(
             nn.Linear(conv_output_size, 512),
+            nn.LayerNorm(512),
             nn.ReLU(),
-            nn.Dropout(0.1)  # 添加dropout防止过拟合
+            nn.Dropout(0.1),
+            
+            nn.Linear(512, 256),
+            nn.LayerNorm(256),
+            nn.ReLU(),
         )
         
         # 策略网络输出层（Actor）
-        self.fc_pi = nn.Linear(512, action_dim)
+        self.fc_pi = nn.Sequential(
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, action_dim)
+        )
         
         # 价值网络输出层（Critic）
-        self.fc_v = nn.Linear(512, 1)
+        self.fc_v = nn.Sequential(
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
 
         # 将网络移动到指定设备
         self.to(device)
@@ -110,19 +136,24 @@ class PPO_Network(nn.Module):
         """
         height, width = obs_dim
         
-        # 第一层卷积: kernel_size=8, stride=4
-        height = (height - 8) // 4 + 1
-        width = (width - 8) // 4 + 1
+        # 第一层卷积: kernel_size=5, stride=2, padding=2
+        # output_size = (input_size + 2*padding - kernel_size) / stride + 1
+        height = (height + 2*2 - 5) // 2 + 1
+        width = (width + 2*2 - 5) // 2 + 1
         
-        # 第二层卷积: kernel_size=4, stride=2
-        height = (height - 4) // 2 + 1
-        width = (width - 4) // 2 + 1
+        # 第二层卷积: kernel_size=3, stride=2, padding=1
+        height = (height + 2*1 - 3) // 2 + 1
+        width = (width + 2*1 - 3) // 2 + 1
         
-        # 第三层卷积: kernel_size=3, stride=1
-        height = (height - 3) // 1 + 1
-        width = (width - 3) // 1 + 1
+        # 第三层卷积: kernel_size=3, stride=2, padding=1
+        height = (height + 2*1 - 3) // 2 + 1
+        width = (width + 2*1 - 3) // 2 + 1
         
-        # 最后一层有64个输出通道
-        total_features = height * width * 64
+        # 第四层卷积: kernel_size=3, stride=2, padding=1
+        height = (height + 2*1 - 3) // 2 + 1
+        width = (width + 2*1 - 3) // 2 + 1
         
+        # 最后一层有256个输出通道
+        total_features = height * width * 256
+            
         return total_features

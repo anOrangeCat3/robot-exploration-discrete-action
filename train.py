@@ -50,7 +50,8 @@ class TrainManager():
         self.agent.train()
 
     def train(self)->None:
-        for i in range(self.episode_num):
+        i = 0
+        while True:
             self.train_episode()
             if (i+1) % EVAL_INTERVAL == 0:
                 average_reward, average_step, average_explored_rate = self.eval()
@@ -62,21 +63,22 @@ class TrainManager():
                     self.best_reward = average_reward
                     # 保存网络参数
                     torch.save(self.agent.network.state_dict(), f'models/model_{self.train_time}.pth')
-                    print(f"New best model saved! Reward: {self.best_reward:.3f}")
-
+                    print(f"New best model saved! Reward: {self.best_reward:.3f}, Explored Rate: {average_explored_rate:.3f}")
+            i += 1
 
     def eval(self)->float:
         average_reward = 0
         average_step = 0
         average_explored_rate = 0
-        for _ in range(self.eval_env.map.all_map_number):
+        eval_episode_num = self.eval_env.map.all_map_number*8
+        for _ in range(eval_episode_num):
             average_reward += self.eval_episode()
             average_step += self.eval_env.step_count
             average_explored_rate += self.eval_env.explored_rate
 
-        average_reward /= self.eval_env.map.all_map_number
-        average_step /= self.eval_env.map.all_map_number
-        average_explored_rate /= self.eval_env.map.all_map_number
+        average_reward /= eval_episode_num
+        average_step /= eval_episode_num
+        average_explored_rate /= eval_episode_num
 
         return average_reward, average_step, average_explored_rate
 

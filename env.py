@@ -111,17 +111,22 @@ class Env:
         done = terminated or truncated
         reward = 0
         # print(f"explored_rate_change: {explored_rate_change},explored_area_change: {explored_area_change}")
-
+        
         # 1. 探索奖励 - 增大奖励信号
         if explored_area_change > 0:
-            # reward += explored_rate_change*200
+            reward += explored_rate_change*30
             self.reward_step = self.step_count
         # 2. 惩罚长时间不探索新的区域
-        if self.step_count - self.reward_step > 10:
-            reward -= ((self.step_count - self.reward_step)//10)*0.05
+        no_exploration_steps = self.step_count - self.reward_step
+        if no_exploration_steps > 10:
+            reward -= ((no_exploration_steps-10)//10)*0.05
         # 3. 完成奖励
         if terminated:
-            reward += 100
+            efficiency_bonus = (1.0 - self.step_count / EXPLORATION_MAX_STEP) * 50
+            reward += efficiency_bonus+50
+        
+        # 4. 运动惩罚 - 轻微惩罚每步，鼓励高效探索
+        reward -= 0.01
         # print(f"explored_rate_change: {explored_rate_change}, reward: {reward}")
         return reward,done
 
