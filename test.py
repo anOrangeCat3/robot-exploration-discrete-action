@@ -25,9 +25,10 @@ agent = PPO_Agent(
 
 # 加载最新的模型文件
 model_dir = 'models'
-model_path = os.path.join(model_dir, 'model_20250620_0054.pth')
+model_path = os.path.join(model_dir, 'model_20250620_1445.pth')
 print(model_path)
-agent.network.load_state_dict(torch.load(model_path))
+checkpoint = torch.load(model_path,weights_only=False)
+agent.network.load_state_dict(checkpoint['model_state_dict'])
 print(f"Loaded model from {model_path}")
 
 # 运行一局游戏并可视化

@@ -22,4 +22,5 @@ CLIP_EPSILON = 0.2  # GAE参数
 
 # 训练参数
 TRAIN_EPISODE_NUM = 1500  # 训练轮数
-EVAL_INTERVAL = 15  # 评估间隔
+EVAL_INTERVAL = 10  # 评估间隔
+SAVE_MODEL_INTERVAL = 200  # 保存模型间隔

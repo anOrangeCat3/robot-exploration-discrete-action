@@ -35,6 +35,7 @@ class Env:
         self.step_count = 0
         self.reward_step = 0
         
+        
 
     def reset(self,)->np.ndarray:
         '''

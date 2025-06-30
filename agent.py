@@ -5,7 +5,7 @@ from typing import Tuple
 
 from network import PPO_Network
 from parameters import LEARNING_RATE, GAMMA, BATCH_SIZE, TRAIN_EPOCHS, ADVANTAGE_LAMBDA, CLIP_EPSILON
-
+from torch.distributions import Categorical
 
 class Episode_Recorder(): 
     def __init__(self,
@@ -72,22 +72,33 @@ class PPO_Agent():
 
         print(f"obs_dim: {obs_dim}, device: {device}")
     
+    # def get_action(self,
+    #                obs:np.ndarray) -> Tuple[torch.tensor, torch.tensor]:
+    #     '''
+    #     Get the action from the network.
+
+    #     return:
+    #         action: 0, 1, 2, 3
+    #     '''
+    #     obs = torch.tensor(obs, dtype = torch.float32).to(self.device)  # shape: (1, obs_dim)
+    #     dist = self.network.pi(obs)  # shape: (1, action_dim)
+    #     dist = F.softmax(dist, dim = -1) 
+    #     action_probs = torch.distributions.Categorical(dist)
+    #     picked_action = action_probs.sample()
+
+    #     return picked_action.item()
     def get_action(self,
                    obs:np.ndarray) -> Tuple[torch.tensor, torch.tensor]:
         '''
         Get the action from the network.
-
-        return:
-            action: 0, 1, 2, 3
         '''
-        obs = torch.tensor(obs, dtype = torch.float32).to(self.device)  # shape: (1, obs_dim)
-        dist = self.network.pi(obs)  # shape: (1, action_dim)
-        dist = F.softmax(dist, dim = -1) 
-        action_probs = torch.distributions.Categorical(dist)
-        picked_action = action_probs.sample()
+        obs = torch.tensor(obs, dtype = torch.float32).to(self.device)
+        logits = self.network.pi(obs)  # 获得logits
+        # 直接用logits创建Categorical分布
+        dist = Categorical(logits=logits)
+        action = dist.sample()
 
-        return picked_action.item()
-        
+        return action.item()
     
     def train(self)->None:
         '''
@@ -115,7 +126,7 @@ class PPO_Agent():
 
         # 3. old_log_prob
         with torch.no_grad():
-            old_log_prob = self.calculate_log_prob(obs, action).detach()
+            old_log_prob= self.calculate_log_prob(obs, action)
 
         # 确保 batch_size 不超过数据量
         batch_size = min(self.batch_size, obs.shape[0])
@@ -129,7 +140,7 @@ class PPO_Agent():
             critic_loss = torch.mean(F.mse_loss(TD_target[sample_indices].detach(), 
                                                 self.network.v(obs[sample_indices])))
             # check_nan(critic_loss, "critic_loss")
-            log_prob = self.calculate_log_prob(obs[sample_indices], action[sample_indices])
+            log_prob, entropy = self.calculate_log_prob_and_entropy(obs[sample_indices], action[sample_indices])
             ratio = torch.exp(log_prob - old_log_prob[sample_indices])  # pi_theta/pi_theta_old
             
             # check_nan(ratio, "ratio")
@@ -137,7 +148,9 @@ class PPO_Agent():
             surr2 = torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * advantage[sample_indices]
             actor_loss = -torch.mean(torch.min(surr1, surr2))
 
-            total_loss = actor_loss + critic_loss
+            entropy_loss = -torch.mean(entropy) * 0.01
+
+            total_loss = actor_loss + critic_loss + entropy_loss
 
             self.optimizer.zero_grad()
             total_loss.backward()
@@ -183,9 +196,23 @@ class PPO_Agent():
         log_prob = torch.log(dist.gather(-1, action))
         # print(f"dist: {dist.shape}")
         # print(f"action: {action.shape}")
-        
-        
         return log_prob
+
+
+    def calculate_log_prob_and_entropy(self,
+                                       obs:torch.tensor,
+                                       action:torch.tensor) -> Tuple[torch.tensor, torch.tensor]:
+        '''
+        计算动作的对数概率
+        '''
+        logits = self.network.pi(obs)
+        dist = Categorical(logits=logits)
+        log_prob = dist.log_prob(action.squeeze(-1))
+        log_prob = log_prob.unsqueeze(-1)
+
+        entropy = dist.entropy()
+        
+        return log_prob, entropy
     
                
     
