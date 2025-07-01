@@ -72,21 +72,6 @@ class PPO_Agent():
 
         print(f"obs_dim: {obs_dim}, device: {device}")
     
-    # def get_action(self,
-    #                obs:np.ndarray) -> Tuple[torch.tensor, torch.tensor]:
-    #     '''
-    #     Get the action from the network.
-
-    #     return:
-    #         action: 0, 1, 2, 3
-    #     '''
-    #     obs = torch.tensor(obs, dtype = torch.float32).to(self.device)  # shape: (1, obs_dim)
-    #     dist = self.network.pi(obs)  # shape: (1, action_dim)
-    #     dist = F.softmax(dist, dim = -1) 
-    #     action_probs = torch.distributions.Categorical(dist)
-    #     picked_action = action_probs.sample()
-
-    #     return picked_action.item()
     def get_action(self,
                    obs:np.ndarray) -> Tuple[torch.tensor, torch.tensor]:
         '''

@@ -59,7 +59,7 @@ class Env:
         # 加上机器人自己的位置
         obs= self.mark_robot_position(robot_belief_map)
         # TODO: resize
-        obs = resize(obs, (192, 256))
+        obs = resize(obs, (164, 164))
 
         return obs
     
@@ -86,7 +86,7 @@ class Env:
         # 加上机器人自己的位置
         obs = self.mark_robot_position(robot_belief_map)
         # TODO: resize
-        obs = resize(obs, (192, 256))
+        obs = resize(obs,(164, 164))
         # TODO: 设计奖励
         reward,done = self.calculate_reward()
         

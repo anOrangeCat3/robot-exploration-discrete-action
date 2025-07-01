@@ -122,8 +122,7 @@ class TrainManager():
         加载模型
         '''
         model_dir = 'models'
-        model_path = model+'.pth'
-        model_path = os.path.join(model_dir, model_path)
+        model_path = os.path.join(model_dir, model)
 
         if model_path and os.path.exists(model_path):
             print(f"Loading model from: {model_path}")
@@ -141,7 +140,7 @@ if __name__ == "__main__":
     eval_env = Env(robot, train_map)
 
     # 获取观察空间和动作空间的维度
-    obs_dim = (192, 256)  # 获取地图的实际尺寸 (height, width)
+    obs_dim = (164, 164)  # 获取地图的实际尺寸 (height, width)
     action_dim = 4  # 上下左右
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -157,7 +156,7 @@ if __name__ == "__main__":
         train_env=train_env,
         eval_env=eval_env,
         agent=agent,
-        model='model_20250621_1953'
+        model='20250630_2244/model_600.pth'
     )
     train_manager.train()
     

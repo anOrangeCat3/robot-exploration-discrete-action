@@ -87,15 +87,10 @@ class PPO_Network(nn.Module):
         
         # 通过卷积层
         x = self.conv_layers(x)
-        # print(f"卷积后特征维度: {x.shape}")
-        
         # 展平
         x = x.view(x.size(0), -1)
-        # print(f"展平后特征维度: {x.shape}")
-        
         # 通过全连接层
         x = self.fc(x)
-        # print(f"全连接层后特征维度: {x.shape}")
         
         return x
     
@@ -135,6 +130,7 @@ class PPO_Network(nn.Module):
             int: 全连接层的输入维度
         """
         height, width = obs_dim
+        # print(height, width)
         
         # 第一层卷积: kernel_size=5, stride=2, padding=2
         # output_size = (input_size + 2*padding - kernel_size) / stride + 1

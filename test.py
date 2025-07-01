@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import os
 
 # 获取观察空间和动作空间的维度
-obs_dim = (192, 256)  # 获取地图的实际尺寸 (height, width)
+obs_dim = (164, 164)  # 获取地图的实际尺寸 (height, width)
 action_dim = 4  # 角度和距离
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -24,11 +24,12 @@ agent = PPO_Agent(
 )
 
 # 加载最新的模型文件
-model_dir = 'models'
-model_path = os.path.join(model_dir, 'model_20250620_1445.pth')
+# model_dir = 'models'
+# model_path = os.path.join(model_dir, 'model_20250620_1445.pth')
+model_path = '/home/wyx/my_projects/robot-exploration-discrete-action/models/20250630_2244/model_600.pth'
 print(model_path)
-checkpoint = torch.load(model_path,weights_only=False)
-agent.network.load_state_dict(checkpoint['model_state_dict'])
+checkpoint = torch.load(model_path)
+agent.network.load_state_dict(checkpoint)
 print(f"Loaded model from {model_path}")
 
 # 运行一局游戏并可视化
